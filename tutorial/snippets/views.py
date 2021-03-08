@@ -1,24 +1,29 @@
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework import permissions, renderers
+from rest_framework import viewsets
+
+from books.permissions import IsOwnerOrReadOnly
 from snippets.models import Snippet
 from snippets.serializers import SnippetSerializer
-from rest_framework import generics
-from rest_framework import viewsets
-from rest_framework import permissions
 
 
 class SnippetViewSet(viewsets.ModelViewSet):
     """
-    API endpoint that allows users to be viewed or edited.
+    This viewset automatically provides `list`, `create`, `retrieve`,
+    `update` and `destroy` actions.
+
+    Additionally we also provide an extra `highlight` action.
     """
     queryset = Snippet.objects.all()
     serializer_class = SnippetSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly,
+                          IsOwnerOrReadOnly]
 
+    @action(detail=True, renderer_classes=[renderers.StaticHTMLRenderer])
+    def highlight(self, request, *args, **kwargs):
+        snippet = self.get_object()
+        return Response(snippet.highlighted)
 
-class SnippetList(generics.ListCreateAPIView):
-    queryset = Snippet.objects.all()
-    serializer_class = SnippetSerializer
-
-
-class SnippetDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Snippet.objects.all()
-    serializer_class = SnippetSerializer
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
