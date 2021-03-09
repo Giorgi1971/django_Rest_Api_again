@@ -15,13 +15,24 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from quickstart.views import api_root
+from quickstart.views import api_root, UserViewSet
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from books.views import BookViewSet, AuthorViewSet
+from snippets.views import SnippetViewSet
 
+# Create a router and register our viewsets with it.
+router = DefaultRouter()
+router.register(r'snippets', SnippetViewSet)
+router.register(r'users', UserViewSet)
+router.register(r'books', BookViewSet)
+router.register(r'authors', AuthorViewSet)
+
+# The API URLs are now determined automatically by the router.
 urlpatterns = [
+    path('', include(router.urls)),
     path('admin/', admin.site.urls),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
-    path('', api_root),
-    path('', include('books.urls')),
-    path('', include('quickstart.urls')),
-    path('', include('snippets.urls')),
 ]
+
+
